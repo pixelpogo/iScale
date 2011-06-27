@@ -24,7 +24,9 @@ Command pattern is always `iScale <cluster shortcut> <command> [<names>]`.
 
 Cluster shortcuts can be defined in .iScale configuration file, otherwise specify the full name of the Scalarium cluster to use.
 
-### `roles`
+### roles
+
+Syntax: `roles`
 
 Displays all roles of a cluster.
 
@@ -39,7 +41,9 @@ Displays all roles of a cluster.
 	redis-masters: 5 instances
 	redis-slaves: 0 instances
 
-### `load <roles>|all`
+### load
+
+Syntax: `load <roles>|all`
 
 Executes `uptime` on specified servers and displays load information in a list. `<roles>` can be a single role or a list of roles.
 
@@ -62,7 +66,9 @@ Executes `uptime` on specified servers and displays load information in a list. 
 	                                                               total load average: 0.00, 0.00, 0.00
 	                                                                       total load: 0.00, 0.00, 0.00
 
-### `cpu <roles>|all`
+### cpu
+
+Syntax: `cpu <roles>|all`
 
 Executes `iostat 3 2` on specified servers and displays cpu usage information in a list. `<roles>` can be a single role or a list of roles.
 
@@ -85,7 +91,9 @@ Executes `iostat 3 2` on specified servers and displays cpu usage information in
 	                                                  total cpu average:   0.00,   0.00,   0.00,   0.00,   0.00, 100.00
 	                                                          total cpu:   0.00,   0.00,   0.00,   0.00,   0.00, 500.00
 
-### `open <names>`
+### open
+
+Syntax: `open <names>`
 
 Open a shell using `ssh -A` to all specified instances and immediately executes `sudo -sEH` afterwards. This will allow you to still use your local private key to connect to other instances within the cluster. `<names>` is a list that can contain any role or instances names. Unless `<names>` is a single instance name a new iTerm windows is opened before.
 
