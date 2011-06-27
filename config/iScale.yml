@@ -1,0 +1,5 @@
+username: scalarium_username
+token: scalarium_token
+shortcuts:
+ cluster1: full_name_of_scalarium_cluster_1
+ cluster2: full_name_of_scalarium_cluster_2

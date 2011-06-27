@@ -1,0 +1,5 @@
+# Added by iScale to avoid SSH warnings when opening shells on dynamic EC2 instances that often change their IPs.
+Host *.compute.amazonaws.com
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  LogLevel FATAL
