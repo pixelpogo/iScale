@@ -6,7 +6,7 @@ While Scalarium offers a powerful web dashboard to manage your cluster you are u
 
 ## Installation
 
-* Download iScale files to local directory (used as DIR below).
+* Download iScale files to local directory (used as `DIR` below).
 * `mv DIR/config/iScale.yml ~/.iScale`
 * Edit ~/iScale to add your Scalarium username, your Scalarium token and shortcuts to your cluster names.
 * `cat DIR/config/ssh_config >> ~/.ssh/config`
