@@ -1,6 +1,6 @@
 # iScale
 
-Tool to manage large cluster at Scalarium from command line.
+Tool to manage large clusters at Scalarium from command line.
 
 While Scalarium offers a powerful web dashboard to manage your cluster you are usually a lot faster working from command line. iScale is there to provide a role-based approach for displaying data or opening shells (using iTerm) for a single instance, all instances of a role or multiple roles in a single command.
 
