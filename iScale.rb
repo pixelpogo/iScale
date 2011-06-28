@@ -58,7 +58,12 @@ def parse_command_line
   elsif ARGV.count >= 3 && ['load', 'open', 'cpu'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
-    abort "Params needed: <cloud> [roles|load {<roles>|all}|{open {<role>|<host>}|load <role>]"
+    abort "Usage: #{file_name} <cloud> <command>\n" +
+          "  cloud :=   Scalarium cloud name or shortcut defined in .iScale\n" +
+          "  command := roles | \n" +
+          "             load { <roles> | all } |\n" +
+          "             cpu { <roles> | all } |\n" +
+          "             open <roles_or_instances>"
   end
 end
 
@@ -81,6 +86,10 @@ end
 
 def home_dir
   File.expand_path(File.dirname(__FILE__))
+end
+
+def file_name
+  File.basename(__FILE__)
 end
 
 ### END command line handling
