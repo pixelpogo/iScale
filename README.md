@@ -95,7 +95,7 @@ Executes `iostat 3 2` on specified servers and displays cpu usage information in
 
 Syntax: `open <names>`
 
-Open a shell using `ssh -A` to all specified instances and immediately executes `sudo -sEH` afterwards. This will allow you to still use your local private key to connect to other instances within the cluster. `<names>` is a list that can contain any role or instances names. Unless `<names>` is a single instance name a new iTerm windows is opened before.
+Opens a shell using `ssh -A` to all specified instances and immediately executes `sudo -sEH` afterwards. This will allow you to use your local private key to connect to other instances within the cluster. `<names>` is a list that can contain role or instances names. Unless `<names>` is a single instance's name shell are opened in a new iTerm window.
 
 	PROMPT$ iScale.rb staging open db-master zeus mws-redis-mu1
 	opening new window...
