@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'rest-client'
 require 'json'
+require 'yaml'
 
 API_URL = 'https://manage.scalarium.com/api/clouds'
 
@@ -72,7 +73,7 @@ def cloud_name(shortcut)
 end
 
 def load_config
-  config = YAML.load_file "/Users/jrr/.iScale"
+  config = YAML.load_file "#{ENV['HOME']}/.iScale"
   @username = config['username']
   @token = config['token']
   @shortcuts = config['shortcuts']
@@ -161,7 +162,7 @@ def cpu_for_hosts_of_role(role)
     load_count += 1
     (0..5).each do |i|
       load_total[i] ||= 0
-      if result[host][:result][i]
+      if result[host][:result] && result[host][:result][i]
         load_total[i] += result[host][:result][i]
       end
     end
