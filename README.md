@@ -4,6 +4,13 @@ Tool to manage large clusters at Scalarium from command line.
 
 While Scalarium offers a powerful web dashboard to manage your cluster you are usually a lot faster working from command line. iScale is there to provide a role-based approach for displaying data or opening shells for a single instance, all instances of a role or multiple roles in a single command.
 
+## Installation
+
+* Download iScale files to local directory (used as `DIR` below).
+* `mv DIR/config/iScale.yml ~/.iScale`
+* Edit ~/iScale to add your Scalarium username, your Scalarium token and shortcuts to your cluster names.
+* `cat DIR/config/ssh_config >> ~/.ssh/config`
+
 ### Dependencies
 
 iScale depends on these gems to be available:
@@ -14,13 +21,6 @@ iScale depends on these gems to be available:
 
 The open command depends that iScale runs on a Mac that has [iTerm](http://iterm.sourceforge.net/) installed. [Applescript](http://iterm.sourceforge.net/scripting.shtml) is used to open the shells.
 All other commands run on any Linux or Unix machine.
-
-## Installation
-
-* Download iScale files to local directory (used as `DIR` below).
-* `mv DIR/config/iScale.yml ~/.iScale`
-* Edit ~/iScale to add your Scalarium username, your Scalarium token and shortcuts to your cluster names.
-* `cat DIR/config/ssh_config >> ~/.ssh/config`
 
 ## Commands
 
