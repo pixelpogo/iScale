@@ -56,7 +56,7 @@ end
 def parse_command_line
   if ARGV.count == 2 && ['roles', 'refresh'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], nil
-  elsif ARGV.count >= 3 && ['load', 'open', 'cpu'].include?(ARGV[1])
+  elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
     abort "Usage: #{file_name} <cloud> <command>\n" +
@@ -172,6 +172,19 @@ def cpu_for_hosts_of_role(role)
   puts "#{'total cpu:'.rjust(82)} %6.2f, %6.2f, %6.2f, %6.2f, %6.2f, %6.2f" % \
     [load_total[0], load_total[1], load_total[2], load_total[3], load_total[4], load_total[5]]
 end
+
+
+def run_commands_on_role(role, command)
+  threads = []
+  instances_of_role(role).each do |instance|
+    threads << Thread.new do
+      puts "###################### #{instance['nickname']}   #######################################"
+      puts `ssh #{@username}@#{instance['dns_name']} \"#{command}\"`
+      puts "#######################################################################"
+    end
+  end
+  threads.each { |t|  t.join }
+end
 ### END commands
 
 
@@ -242,6 +255,10 @@ when 'cpu'
     else
       abort "Unknown role #{detail.inspect}, use command 'roles' to list all available roles."
     end
+  end
+when 'execute'
+  filtered_roles(details.first).each do |role|
+    run_commands_on_role(role, details[-1])
   end
 else
   abort "Unknown command '#{command}'"
