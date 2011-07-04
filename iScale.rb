@@ -186,14 +186,18 @@ end
 
 def run_commands_on_role(role, command)
   threads = []
+  results = {}
   instances_of_role(role).each do |instance|
     threads << Thread.new do
-      puts "###################### #{instance['nickname']}   #######################################"
-      puts `ssh #{@username}@#{instance['dns_name']} \"#{command}\"`
-      puts "#######################################################################"
+      results[instance['nickname'].to_sym] =  `ssh #{@username}@#{instance['dns_name']} \"#{command}\"`
     end
   end
   threads.each { |t|  t.join }
+  results.each do |instance, result|
+    puts "###################### #{instance}   #######################################"
+    puts result
+    puts "#######################################################################"
+  end
 end
 
 def deploy_application(name)
