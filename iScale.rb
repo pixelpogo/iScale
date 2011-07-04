@@ -10,7 +10,11 @@ API_URL = 'https://manage.scalarium.com/api/clouds'
 ### BEGIN Scalarium API handling
 
 def api(uri = '')
-  JSON.parse(RestClient.get("#{API_URL}#{uri}", {'X-Scalarium-Token' => @token, 'Accept' => 'application/vnd.scalarium-v1+json'}))
+  JSON.parse(RestClient.get("#{API_URL}#{uri}", headers))
+end
+
+def headers
+  {'X-Scalarium-Token' => @token, 'Accept' => 'application/vnd.scalarium-v1+json'}
 end
 
 def load_cloud(name)
@@ -19,6 +23,10 @@ end
 
 def cloud
   @cloud
+end
+
+def applications
+  @applications ||= JSON.parse(RestClient.get("https://manage.scalarium.com/api/applications", headers))
 end
 
 def roles
@@ -56,6 +64,8 @@ end
 def parse_command_line
   if ARGV.count == 2 && ['roles', 'refresh'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], nil
+  elsif ARGV[0] == 'deploy'
+    return deploy_application(ARGV[1])
   elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
@@ -184,6 +194,13 @@ def run_commands_on_role(role, command)
     end
   end
   threads.each { |t|  t.join }
+end
+
+def deploy_application(name)
+  app = applications.detect{|application| application['name'] == name}
+  if app
+    puts RestClient.post("https://manage.scalarium.com/api/applications/#{app['id']}/deploy", JSON.dump(:command => 'deploy'), headers)
+  end
 end
 ### END commands
 
