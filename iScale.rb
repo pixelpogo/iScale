@@ -137,19 +137,18 @@ end
 def load_for_hosts_of_role(role)
   result = {}
   puts role['shortname']
-  outputs = collect
-  instances_of_role(role).each do |instance|
-    host = instance['nickname']
-    result[host] = {}
-    result[host][:address] = instance['dns_name']
-    t << Thread.new do
-      result[host][:output] = `ssh #{@username}@#{instance['dns_name']} \"uptime | sed 's/.*load/load/'\"`
-      from = 'load average: '.length
-      til = -2
-      result[host][:load_1m], result[host][:load_5m], result[host][:load_15m] = result[host][:output][from..til].split(', ').map{|load| load.to_f} rescue puts "Error while getting load for #{host}"
-    end
+  outputs = collect(role, verbose = true) do | instance|
+    { :instance => instance, 
+      :output   => `ssh #{@username}@#{instance['dns_name']} \"uptime | sed 's/.*load/load/'\"` }
   end
-  t.each {|thread| thread.join(5) } # wait max. 5 seconds for all threads to finish
+  outputs.each do |host, hash|
+    result[host] = {}
+    result[host][:address] = hash[:instance]['dns_name']
+    result[host][:output] = hash[:output]
+    from = 'load average: '.length
+    til = -2
+    result[host][:load_1m], result[host][:load_5m], result[host][:load_15m] = hash[:output][from..til].split(', ').map{|load| load.to_f} rescue puts "Error while getting load for #{host}"
+  end
   load_total = {}
   load_count = 0
   result.keys.sort.each do |host|
@@ -171,8 +170,8 @@ def cpu_for_hosts_of_role(role)
   result = {}
   puts "#{role['shortname'].ljust(69)} cpu average:  %user   %nice %system %iowait  %steal   %idle"
   outputs = collect(role, verbose = true) do |instance|
-    {:instance => instance, 
-     :output => `ssh #{@username}@#{instance['dns_name']} \"iostat 3 2 | grep avg-cpu -C1 | tail -1\"`}
+    { :instance => instance, 
+      :output   => `ssh #{@username}@#{instance['dns_name']} \"iostat 3 2 | grep avg-cpu -C1 | tail -1\"`}
   end
   outputs.each do |host, hash|
     result[host] = {}
