@@ -69,13 +69,14 @@ def parse_command_line
   elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
-    abort "Usage: #{file_name} <cloud> <command>\n" +
+    abort "Usage 1: #{file_name} <cloud> <command>\n" +
           "  cloud :=   Scalarium cloud name or shortcut defined in .iScale\n" +
           "  command := roles | \n" +
           "             load { <roles> | all } |\n" +
           "             cpu { <roles> | all } |\n" +
           "             open <roles_or_instances>\n" +
-          "             execute <role> <command>"
+          "             execute <role> <command>\n" + 
+          "Usage 2: #{file_name} deploy <application>"
   end
 end
 
