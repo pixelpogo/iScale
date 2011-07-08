@@ -203,9 +203,9 @@ end
 
 def run_commands_on_role(role, command)
   results = collect(role) { |instance| `ssh #{@username}@#{instance['dns_name']} \"#{command}\"` }
-  results.each do |instance, result|
-    puts " #{instance} ".center(78, '#')
-    puts result
+  results.keys.sort.each do |host|
+    puts " #{host} ".center(78, '#')
+    puts results[host]
     puts
   end
 end
