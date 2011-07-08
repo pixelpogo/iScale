@@ -24,7 +24,7 @@ All other commands run on any Linux or Unix machine.
 
 ## Commands
 
-Command pattern is always `iScale <cluster shortcut> <command> [<names>]`.
+Command pattern is always `iScale <cluster shortcut> <command> [<names>]` but as always there is one exception: The `deploy` command is called without specifying a `cluster shortcut` (see below).
 
 Cluster shortcuts can be defined in .iScale configuration file, otherwise specify the full name of the Scalarium cluster to use.
 
@@ -128,3 +128,13 @@ Opens a shell using your configured user name on each instance of specified `<ro
 
 	################################ mws-xdb-m04 #################################
 	 14:11:39 up 211 days, 34 min,  0 users,  load average: 0.00, 0.00, 0.00
+
+### deploy
+
+Syntax: `deploy <application`
+
+Starts deployment of an application. Check the Scalarium web site on progress.
+*Be careful is multiple applications have the same name!*
+
+	PROMPT$ iScale.rb deploy "MW SSL"
+	{"migration_instance_id":null,"recipes":null,"status":"running","command":"deploy","shift_between_restarts":0,"revision":null,"created_at":"2011/07/08 16:20:45 +0000","custom_json":null,"updated_at":"2011/07/08 16:20:45 +0000","comment":null,"successful":null,"completed_at":null,"migrate":null,...}
