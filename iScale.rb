@@ -106,13 +106,15 @@ end
 def collect(role)
   workers = []
   results = {}
-  instances_of_role(role).each do |instance|
+  instances = instances_of_role(role)
+  instances.each do |instance|
+    results[instance['nickname']] = {:instance => instance, :output => 'TIMEOUT'} # default in case of timeout
     workers << Thread.new do
       results[instance['nickname']] = yield instance
     end
   end
   collectors = []
-  workers.each { |w| collectors << Thread.new { w.join(5) } }
+  workers.each { |w| collectors << Thread.new { w.join(10) } }
   collectors.each { |c| c.join }
   results
 end
@@ -162,21 +164,20 @@ def load_for_hosts_of_role(role)
 end
 
 def cpu_for_hosts_of_role(role)
-  t = []
   result = {}
   puts "#{role['shortname'].ljust(69)} cpu average:  %user   %nice %system %iowait  %steal   %idle"
-  instances_of_role(role).each do |instance|
-    host = instance['nickname']
-    result[host] = {}
-    result[host][:address] = instance['dns_name']
-    t << Thread.new do
-      result[host][:output] = `ssh #{@username}@#{instance['dns_name']} \"iostat 3 2 | grep avg-cpu -C1 | tail -1\"`
-      from = 'avg-cpu: '.length
-      til = -1
-      result[host][:result] = result[host][:output][from..til].split(' ').delete_if{|t| t == ''}.map{|n| n.to_f} rescue puts("Error while getting load for #{host}")
-    end
+  outputs = collect(role) do |instance|
+    {:instance => instance, 
+     :output => `ssh #{@username}@#{instance['dns_name']} \"iostat 3 2 | grep avg-cpu -C1 | tail -1\"`}
   end
-  t.each {|thread| thread.join(5) } # wait max. 5 seconds for all threads to finish
+  outputs.each do |host, hash|
+    result[host] = {}
+    result[host][:address] = hash[:instance]['dns_name']
+    result[host][:output] = hash[:output]
+    from = 'avg-cpu: '.length
+    til = -1
+    result[host][:result] = result[host][:output][from..til].split(' ').delete_if{|t| t == ''}.map{|n| n.to_f} rescue puts("Error while getting load for #{host}")
+  end
   load_total = []
   load_count = 0
   result.keys.sort.each do |host|
