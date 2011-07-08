@@ -103,12 +103,16 @@ def file_name
   File.basename(__FILE__)
 end
 
-def collect(role)
+def collect(role, verbose = false)
   workers = []
   results = {}
   instances = instances_of_role(role)
   instances.each do |instance|
-    results[instance['nickname']] = {:instance => instance, :output => 'TIMEOUT'} # default in case of timeout
+    if verbose # TODO rather ugly, but currently we need two different kind of defaults in case of timeout
+      results[instance['nickname']] = {:instance => instance, :output => 'TIMEOUT'}
+    else
+      results[instance['nickname']] = 'TIMEOUT'
+    end
     workers << Thread.new do
       results[instance['nickname']] = yield instance
     end
@@ -131,9 +135,9 @@ def list_roles
 end
 
 def load_for_hosts_of_role(role)
-  t = []
   result = {}
   puts role['shortname']
+  outputs = collect
   instances_of_role(role).each do |instance|
     host = instance['nickname']
     result[host] = {}
@@ -166,17 +170,16 @@ end
 def cpu_for_hosts_of_role(role)
   result = {}
   puts "#{role['shortname'].ljust(69)} cpu average:  %user   %nice %system %iowait  %steal   %idle"
-  outputs = collect(role) do |instance|
+  outputs = collect(role, verbose = true) do |instance|
     {:instance => instance, 
      :output => `ssh #{@username}@#{instance['dns_name']} \"iostat 3 2 | grep avg-cpu -C1 | tail -1\"`}
   end
   outputs.each do |host, hash|
     result[host] = {}
     result[host][:address] = hash[:instance]['dns_name']
-    result[host][:output] = hash[:output]
     from = 'avg-cpu: '.length
     til = -1
-    result[host][:result] = result[host][:output][from..til].split(' ').delete_if{|t| t == ''}.map{|n| n.to_f} rescue puts("Error while getting load for #{host}")
+    result[host][:result] = hash[:output][from..til].split(' ').delete_if{|t| t == ''}.map{|n| n.to_f} rescue puts("Error while getting load for #{host}")
   end
   load_total = []
   load_count = 0
