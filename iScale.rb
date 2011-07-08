@@ -64,8 +64,8 @@ end
 def parse_command_line
   if ARGV.count == 2 && ['roles', 'refresh'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], nil
-  elsif ARGV[0] == 'deploy'
-    return deploy_application(ARGV[1])
+  elsif ARGV.count == 2 && ARGV[0] == 'deploy' 
+    return nil, 'deploy', ARGV[1]
   elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
@@ -214,9 +214,8 @@ end
 
 def deploy_application(name)
   app = applications.detect{|application| application['name'] == name}
-  if app
-    puts RestClient.post("https://manage.scalarium.com/api/applications/#{app['id']}/deploy", JSON.dump(:command => 'deploy'), headers)
-  end
+  abort "Unknown application '#{name}'. Valid applications are #{applications.map{|a|a['name'].inspect}.join(', ')}" unless app
+  puts RestClient.post("https://manage.scalarium.com/api/applications/#{app['id']}/deploy", JSON.dump(:command => 'deploy'), headers)
 end
 ### END commands
 
@@ -244,10 +243,10 @@ end
 
 load_config
 cloud_shortcut, command, details = parse_command_line
-load_cloud cloud_shortcut
-abort "Unknown cloud #{cloud_shortcut.inspect}, use full cloud name or specify a shortcut in .iScale config file." unless cloud
-
-host = 'foobar'
+unless command == 'deploy'
+  load_cloud cloud_shortcut
+  abort "Unknown cloud #{cloud_shortcut.inspect}, use full cloud name or specify a shortcut in .iScale config file." unless cloud
+end
 
 case command
 when 'roles'
@@ -294,6 +293,8 @@ when 'execute'
   else
     abort "Unknown role #{details.first.inspect}, use command 'roles' to list all available roles."
   end
+when 'deploy'
+  deploy_application(details)
 else
   abort "Unknown command '#{command}'"
 end
