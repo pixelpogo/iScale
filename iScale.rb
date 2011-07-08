@@ -278,7 +278,7 @@ when 'cpu'
   end
 when 'execute'
   filtered_roles(details.first).each do |role|
-    run_commands_on_role(role, details[-1])
+    run_commands_on_role(role, details[1..-1].join(' '))
   end
 else
   abort "Unknown command '#{command}'"

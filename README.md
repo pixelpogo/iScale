@@ -108,9 +108,9 @@ Opens a shell using `ssh -A` to all specified instances and immediately executes
 
 Syntax: `execute <role> <command>`
 
-Opens a shell using your configured user name on each instance of specified `<role>` and executes the specified `<command>`. If command has multiple words, use a pair of `"`.
+Opens a shell using your configured user name on each instance of specified `<role>` and executes the specified `<command>`.
 	
-	PROMPT$ iScale.rb staging execute db-master "uptime"
+	PROMPT$ iScale.rb staging execute db-master uptime
 	################################ mws-xdb-mf1 #################################
 	 14:11:40 up 65 days, 23:24,  0 users,  load average: 0.00, 0.00, 0.00
 
