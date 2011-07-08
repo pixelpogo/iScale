@@ -59,7 +59,7 @@ end
 ### END Scalarium API handling
 
 
-### BEGIN command line handling
+### BEGIN base methods
 
 def parse_command_line
   if ARGV.count == 2 && ['roles', 'refresh'].include?(ARGV[1])
@@ -103,7 +103,21 @@ def file_name
   File.basename(__FILE__)
 end
 
-### END command line handling
+def collect(role)
+  workers = []
+  results = {}
+  instances_of_role(role).each do |instance|
+    workers << Thread.new do
+      results[instance['nickname']] = yield instance
+    end
+  end
+  collectors = []
+  workers.each { |w| collectors << Thread.new { w.join(5) } }
+  collectors.each { |c| c.join }
+  results
+end
+
+### END base methods
 
 
 ### BEGIN commands
@@ -185,9 +199,7 @@ end
 
 
 def run_commands_on_role(role, command)
-  r = collect(role) { |instance| `ssh #{@username}@#{instance['dns_name']} \"#{command}\"` }
-  results = {}
-  r.each { |instance, result| results[instance['nickname'].to_sym] = result }
+  results = collect(role) { |instance| `ssh #{@username}@#{instance['dns_name']} \"#{command}\"` }
   results.each do |instance, result|
     puts " #{instance} ".center(78, '#')
     puts result
@@ -204,20 +216,6 @@ def deploy_application(name)
 end
 ### END commands
 
-
-def collect(role)
-  workers = []
-  results = {}
-  instances_of_role(role).each do |instance|
-    workers << Thread.new do
-      results[instance] = yield instance
-    end
-  end
-  collectors = []
-  workers.each { |w| collectors << Thread.new { w.join(5) } }
-  collectors.each { |c| c.join }
-  results
-end
 
 ### BEGIN window handling
 
