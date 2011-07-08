@@ -138,3 +138,12 @@ Starts deployment of an application. Check the Scalarium web site on progress.
 
 	PROMPT$ iScale.rb deploy "MW SSL"
 	{"migration_instance_id":null,"recipes":null,"status":"running","command":"deploy","shift_between_restarts":0,"revision":null,"created_at":"2011/07/08 16:20:45 +0000","custom_json":null,"updated_at":"2011/07/08 16:20:45 +0000","comment":null,"successful":null,"completed_at":null,"migrate":null,...}
+
+### md5sum
+
+Syntax: `md5sum <role> <file>`
+
+Compares `md5sum` output for specified `<file>` on every instance of `<role>`. Results are grouped together to quickly check if one or more instances have a different (configuration) file deployed.
+	
+	PROMPT$ iScale.rb staging md5sum db-master /home/ubuntu/some.properties
+	6x 9028c2a1f3d95c9396ba1f218570f58f: mws-xdb-m01 mws-xdb-m02 mws-xdb-m03 mws-xdb-m04 mws-xdb-mf1 mws-xdb-testing1

@@ -66,7 +66,7 @@ def parse_command_line
     return cloud_name(ARGV[0]), ARGV[1], nil
   elsif ARGV.count == 2 && ARGV[0] == 'deploy' 
     return nil, 'deploy', ARGV[1]
-  elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute'].include?(ARGV[1])
+  elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute', 'md5sum'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
     abort "Usage 1: #{file_name} <cloud> <command>\n" +
@@ -75,7 +75,8 @@ def parse_command_line
           "             load { <roles> | all } |\n" +
           "             cpu { <roles> | all } |\n" +
           "             open <roles_or_instances>\n" +
-          "             execute <role> <command>\n" + 
+          "             execute <role> <command>\n" +
+          "             md5sum <role> <file>\n" + 
           "Usage 2: #{file_name} deploy <application>"
   end
 end
@@ -123,6 +124,13 @@ def collect(role, verbose = false)
   workers.each { |w| collectors << Thread.new { w.join(10) } }
   collectors.each { |c| c.join }
   results
+end
+
+def cut(text, length = 60, cut_string = "...")
+  if text
+    l = length - cut_string.length
+    (text.length > length ? text[0...l] + cut_string : text).to_s
+  end
 end
 
 ### END base methods
@@ -215,8 +223,22 @@ end
 
 def deploy_application(name)
   app = applications.detect{|application| application['name'] == name}
-  abort "Unknown application '#{name}'. Valid applications are #{applications.map{|a|a['name'].inspect}.join(', ')}" unless app
+  abort "Unknown application '#{name}'. Valid applications are #{applications.map{|a|a['name'].inspect}.join(' ')}" unless app
   puts RestClient.post("https://manage.scalarium.com/api/applications/#{app['id']}/deploy", JSON.dump(:command => 'deploy'), headers)
+end
+
+
+def check_md5_for_hosts_of_role(role, file)
+  outputs = collect(role) { |instance| `ssh #{@username}@#{instance['dns_name']} \"md5sum #{file}\" | sed 's/ .*//'` }
+  results = outputs.inject(Hash.new) do |hash, output|
+    host, md5 = output
+    hash[md5.chomp] ||= []
+    hash[md5.chomp] << host
+    hash
+  end
+  results.keys.sort{|m1, m2| results[m2].length <=> results[m1].length}.each do |md5|
+    puts "#{(results[md5].length).to_s.rjust(2)}x #{md5}: #{cut(results[md5].sort.join(" "), 80)}"
+  end
 end
 ### END commands
 
@@ -296,6 +318,13 @@ when 'execute'
   end
 when 'deploy'
   deploy_application(details)
+when 'md5sum'
+  # still experimental, use with care
+  if !(roles = filtered_roles(details.first)).empty?
+    check_md5_for_hosts_of_role(roles.first, details[1..-1].join(' '))
+  else
+    abort "Unknown role #{details.first.inspect}, use command 'roles' to list all available roles."
+  end
 else
   abort "Unknown command '#{command}'"
 end
