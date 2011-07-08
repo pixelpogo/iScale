@@ -103,3 +103,28 @@ Opens a shell using `ssh -A` to all specified instances and immediately executes
 
 	PROMPT$ iScale.rb staging open db-master zeus mws-redis-mu1
 	opening new window...
+
+### execute
+
+Syntax: `execute <role> <command>`
+
+Opens a shell using your configured user name on each instance of specified `<role>` and executes the specified `<command>`. If command has multiple words, use a pair of `"`.
+	
+	PROMPT$ iScale.rb staging execute db-master "uptime"
+	################################ mws-xdb-mf1 #################################
+	 14:11:40 up 65 days, 23:24,  0 users,  load average: 0.00, 0.00, 0.00
+
+	############################## mws-xdb-testing1 ##############################
+	 14:11:39 up 113 days,  4:01,  0 users,  load average: 0.02, 0.06, 0.02
+
+	################################ mws-xdb-m01 #################################
+	 14:11:39 up 139 days, 12:20,  0 users,  load average: 0.00, 0.00, 0.00
+
+	################################ mws-xdb-m02 #################################
+	 14:11:39 up 211 days, 35 min,  0 users,  load average: 0.00, 0.00, 0.00
+
+	################################ mws-xdb-m03 #################################
+	 14:11:39 up 211 days, 35 min,  0 users,  load average: 0.00, 0.00, 0.00
+
+	################################ mws-xdb-m04 #################################
+	 14:11:39 up 211 days, 34 min,  0 users,  load average: 0.00, 0.00, 0.00

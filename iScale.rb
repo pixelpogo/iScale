@@ -194,9 +194,9 @@ def run_commands_on_role(role, command)
   end
   threads.each { |t|  t.join }
   results.each do |instance, result|
-    puts "###################### #{instance}   #######################################"
+    puts " #{instance} ".center(78, '#')
     puts result
-    puts "#######################################################################"
+    puts
   end
 end
 
@@ -238,8 +238,6 @@ abort "Unknown cloud #{cloud_shortcut.inspect}, use full cloud name or specify a
 host = 'foobar'
 
 case command
-when 'refresh'
-  remove_config(host)
 when 'roles'
   list_roles
 when 'load'
