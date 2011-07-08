@@ -10,7 +10,11 @@ API_URL = 'https://manage.scalarium.com/api/clouds'
 ### BEGIN Scalarium API handling
 
 def api(uri = '')
-  JSON.parse(RestClient.get("#{API_URL}#{uri}", {'X-Scalarium-Token' => @token, 'Accept' => 'application/vnd.scalarium-v1+json'}))
+  JSON.parse(RestClient.get("#{API_URL}#{uri}", headers))
+end
+
+def headers
+  {'X-Scalarium-Token' => @token, 'Accept' => 'application/vnd.scalarium-v1+json'}
 end
 
 def load_cloud(name)
@@ -19,6 +23,10 @@ end
 
 def cloud
   @cloud
+end
+
+def applications
+  @applications ||= JSON.parse(RestClient.get("https://manage.scalarium.com/api/applications", headers))
 end
 
 def roles
@@ -56,7 +64,9 @@ end
 def parse_command_line
   if ARGV.count == 2 && ['roles', 'refresh'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], nil
-  elsif ARGV.count >= 3 && ['load', 'open', 'cpu'].include?(ARGV[1])
+  elsif ARGV[0] == 'deploy'
+    return deploy_application(ARGV[1])
+  elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
     abort "Usage: #{file_name} <cloud> <command>\n" +
@@ -172,6 +182,30 @@ def cpu_for_hosts_of_role(role)
   puts "#{'total cpu:'.rjust(82)} %6.2f, %6.2f, %6.2f, %6.2f, %6.2f, %6.2f" % \
     [load_total[0], load_total[1], load_total[2], load_total[3], load_total[4], load_total[5]]
 end
+
+
+def run_commands_on_role(role, command)
+  threads = []
+  results = {}
+  instances_of_role(role).each do |instance|
+    threads << Thread.new do
+      results[instance['nickname'].to_sym] =  `ssh #{@username}@#{instance['dns_name']} \"#{command}\"`
+    end
+  end
+  threads.each { |t|  t.join }
+  results.each do |instance, result|
+    puts "###################### #{instance}   #######################################"
+    puts result
+    puts "#######################################################################"
+  end
+end
+
+def deploy_application(name)
+  app = applications.detect{|application| application['name'] == name}
+  if app
+    puts RestClient.post("https://manage.scalarium.com/api/applications/#{app['id']}/deploy", JSON.dump(:command => 'deploy'), headers)
+  end
+end
 ### END commands
 
 
@@ -243,6 +277,10 @@ when 'cpu'
     else
       abort "Unknown role #{detail.inspect}, use command 'roles' to list all available roles."
     end
+  end
+when 'execute'
+  filtered_roles(details.first).each do |role|
+    run_commands_on_role(role, details[-1])
   end
 else
   abort "Unknown command '#{command}'"
