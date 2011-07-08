@@ -74,7 +74,8 @@ def parse_command_line
           "  command := roles | \n" +
           "             load { <roles> | all } |\n" +
           "             cpu { <roles> | all } |\n" +
-          "             open <roles_or_instances>"
+          "             open <roles_or_instances>\n" +
+          "             execute <role> <command>"
   end
 end
 
