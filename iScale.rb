@@ -197,8 +197,9 @@ end
 ### BEGIN "MAIN" program
 
 load_config
-cloud, command, details = parse_command_line
-load_cloud cloud
+cloud_shortcut, command, details = parse_command_line
+load_cloud cloud_shortcut
+abort "Unknown cloud #{cloud_shortcut.inspect}, use full cloud name or specify a shortcut in .iScale config file." unless cloud
 
 host = 'foobar'
 
