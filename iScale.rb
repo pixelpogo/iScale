@@ -277,8 +277,10 @@ when 'cpu'
     end
   end
 when 'execute'
-  filtered_roles(details.first).each do |role|
-    run_commands_on_role(role, details[1..-1].join(' '))
+  if !(roles = filtered_roles(details.first)).empty?
+    run_commands_on_role(roles.first, details[1..-1].join(' '))
+  else
+    abort "Unknown role #{details.first.inspect}, use command 'roles' to list all available roles."
   end
 else
   abort "Unknown command '#{command}'"
