@@ -185,20 +185,16 @@ end
 
 
 def run_commands_on_role(role, command)
-  threads = []
+  r = collect(role) { |instance| `ssh #{@username}@#{instance['dns_name']} \"#{command}\"` }
   results = {}
-  instances_of_role(role).each do |instance|
-    threads << Thread.new do
-      results[instance['nickname'].to_sym] =  `ssh #{@username}@#{instance['dns_name']} \"#{command}\"`
-    end
-  end
-  threads.each { |t|  t.join }
+  r.each { |instance, result| results[instance['nickname'].to_sym] = result }
   results.each do |instance, result|
     puts " #{instance} ".center(78, '#')
     puts result
     puts
   end
 end
+
 
 def deploy_application(name)
   app = applications.detect{|application| application['name'] == name}
@@ -208,6 +204,20 @@ def deploy_application(name)
 end
 ### END commands
 
+
+def collect(role)
+  workers = []
+  results = {}
+  instances_of_role(role).each do |instance|
+    workers << Thread.new do
+      results[instance] = yield instance
+    end
+  end
+  collectors = []
+  workers.each { |w| collectors << Thread.new { w.join(5) } }
+  collectors.each { |c| c.join }
+  results
+end
 
 ### BEGIN window handling
 
