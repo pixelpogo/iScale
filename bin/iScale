@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 require 'rubygems'
 require 'rest-client'
@@ -99,7 +99,7 @@ def abort(message)
 end
 
 def home_dir
-  File.expand_path(File.dirname(__FILE__))
+  File.join(File.expand_path(File.dirname(__FILE__)), "..")
 end
 
 def file_name
