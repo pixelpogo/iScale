@@ -6,7 +6,7 @@ require 'json'
 require 'yaml'
 
 API_URL = 'https://manage.scalarium.com/api/clouds'
-
+COMMANDS = ['load', 'open', 'cpu', 'execute', 'md5sum', 'deploy', 'instances','rails-console','rails2-console','applications']
 ### BEGIN Scalarium API handling
 
 def api(uri = '')
@@ -62,11 +62,11 @@ end
 ### BEGIN base methods
 
 def parse_command_line
-  if ARGV.count == 2 && ['roles', 'refresh'].include?(ARGV[1])
+  if ARGV.count == 2 && ['roles', 'refresh','instances','applications'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], nil
-  elsif ARGV.count == 2 && ARGV[0] == 'deploy' 
+  elsif ARGV.count == 2 && ARGV[0] == 'deploy'
     return nil, 'deploy', ARGV[1]
-  elsif ARGV.count >= 3 && ['load', 'open', 'cpu', 'execute', 'md5sum'].include?(ARGV[1])
+  elsif ARGV.count >= 3 && COMMANDS.include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], ARGV[2..-1]
   else
     abort "Usage 1: #{file_name} <cloud> <command>\n" +
@@ -76,7 +76,10 @@ def parse_command_line
           "             cpu { <roles> | all } |\n" +
           "             open <roles_or_instances>\n" +
           "             execute <role> <command>\n" +
-          "             md5sum <role> <file>\n" + 
+          "             md5sum <role> <file>\n" +
+          "             instances\n" +
+          "             applications\n" +
+          "             rails-console <application> [<deploy_user>] [<deploy_to_path>]\n" +
           "Usage 2: #{file_name} deploy <application>"
   end
 end
@@ -148,7 +151,7 @@ def load_for_hosts_of_role(role)
   result = {}
   puts role['shortname']
   outputs = collect(role, verbose = true) do | instance|
-    { :instance => instance, 
+    { :instance => instance,
       :output   => `ssh #{@username}@#{instance['dns_name']} \"uptime | sed 's/.*load/load/'\"` }
   end
   outputs.each do |host, hash|
@@ -180,7 +183,7 @@ def cpu_for_hosts_of_role(role)
   result = {}
   puts "#{role['shortname'].ljust(69)} cpu average:  %user   %nice %system %iowait  %steal   %idle"
   outputs = collect(role, verbose = true) do |instance|
-    { :instance => instance, 
+    { :instance => instance,
       :output   => `ssh #{@username}@#{instance['dns_name']} \"iostat 3 2 | grep avg-cpu -C1 | tail -1\"`}
   end
   outputs.each do |host, hash|
@@ -220,6 +223,38 @@ def run_commands_on_role(role, command)
   end
 end
 
+def rails_console(args, rails3=true)
+  name = args[0]
+  print_status "Looking for app '#{name}'..."
+  app = applications.detect{|application| application['slug_name'] == name and application['cluster_id'].to_s == @cloud['id'] }
+  abort "Unknown application '#{name}'. Valid applications are #{applications.map{|a|a['slug_name'].inspect}.join(' ')}" unless app
+  abort "#{name} is not a rails app!" if app["application_type"] != "rails"
+  print_status "Found app '#{app['name']}'"
+  role = roles.detect{|r| r["shortname"].to_s == "rails-app"}
+  abort "No role 'rails-app' available." unless role
+  print_status "Found role #{role['name']}"
+  instance = instances.detect { |i| i["role_ids"].include?(role["id"]) and i['status'] == "online" }
+  abort "No (running) instance found" unless instance
+  print_status "Connecting to instance #{instance['nickname']}..."
+  console = "#{name}: rails console on #{instance['nickname']}"
+  print_status "Opened new tab '#{console}’\n"
+  deploy_user = args[1] || "deploy"
+  rails_app_path = args[2] ||  "/srv/www/#{app['slug_name']}/current"
+  console = rails3 ? "rails c" : "ruby script/console"
+  open_tab console, "ssh\ -A\ #{@username}@#{instance['dns_name']}", "cd #{rails_app_path}; sudo -u #{deploy_user} #{console} #{app['rails_env']}"
+end
+
+def print_list_of_instances
+  list = hash_to_list_view(list_of_instances)
+  output = (list.size > 0 ? list : "no instances")
+  puts output
+end
+
+def print_list_of_applications
+  list = hash_to_list_view(list_of_applications)
+  output = (list.size > 0 ? list : "no applications")
+  puts output
+end
 
 def deploy_application(name)
   app = applications.detect{|application| application['name'] == name}
@@ -242,6 +277,76 @@ def check_md5_for_hosts_of_role(role, file)
 end
 ### END commands
 
+
+#### Begin helpers
+def list_of_applications
+  clouds = api()
+  applications.map do |application|
+    cloud = clouds.detect{|c| c['id'] == application['cluster_id']}
+    {
+      :name             => application["name"].to_s[0..29].ljust(30),
+      :slug_name        => application["slug_name"].to_s.ljust(20),
+      :application_type => application["application_type"].to_s.ljust(20),
+      :cloud            => ("#{cloud['name']} (#{cloud['region']})" rescue "").ljust(40)
+    }
+  end
+end
+
+def list_of_instances
+  instances.map do |instance|
+    {
+      :nickname     => instance["nickname"].to_s[0..19].ljust(20),
+      :ip           => instance["ip"].to_s.ljust(20),
+      :private_ip   => instance["private_ip"].to_s.ljust(20),
+      :status       => instance["status"].to_s.ljust(20),
+      :instance_id  => instance["instance_id"].to_s.ljust(12)
+    }
+  end
+end
+
+def hash_to_list_view(hash)
+  list_view = ""
+  if hash.size > 0
+    width = 0
+    # generate headline
+    hash.first.keys.each do |key|
+      key_width = hash.first[key].length.to_i
+      list_view << key.to_s.upcase.ljust(key_width)
+      width += key_width
+    end
+    list_view << "\n".ljust(width,"-") + "\n"
+    hash.each do |instance|
+      instance.each{|k,v| list_view << v }
+      list_view << "\n"
+    end
+  end
+  list_view
+end
+
+def hash_to_list_view(hash)
+  list_view = ""
+  if hash.size > 0
+    width = 0
+    # generate headline
+    hash.first.keys.each do |key|
+      key_width = hash.first[key].length.to_i
+      list_view << key.to_s.upcase.ljust(key_width)
+      width += key_width
+    end
+    list_view << "\n".ljust(width,"-") + "\n"
+    hash.each do |instance|
+      instance.each{|k,v| list_view << v }
+      list_view << "\n"
+    end
+  end
+  list_view
+end
+
+def print_status(message)
+  print "\r\e[0K#{message}"
+  $stdout.flush
+end
+#### END helpers
 
 ### BEGIN window handling
 
@@ -325,6 +430,14 @@ when 'md5sum'
   else
     abort "Unknown role #{details.first.inspect}, use command 'roles' to list all available roles."
   end
+when 'instances'
+  print_list_of_instances
+when 'applications'
+  print_list_of_applications
+when 'rails-console'
+  rails_console(details)
+when 'rails2-console'
+  rails_console(details,rails3=false)
 else
   abort "Unknown command '#{command}'"
 end

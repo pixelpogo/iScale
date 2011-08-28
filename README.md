@@ -147,3 +147,34 @@ Compares `md5sum` output for specified `<file>` on every instance of `<role>`. R
 	
 	PROMPT$ iScale.rb staging md5sum db-master /home/ubuntu/some.properties
 	6x 9028c2a1f3d95c9396ba1f218570f58f: mws-xdb-m01 mws-xdb-m02 mws-xdb-m03 mws-xdb-m04 mws-xdb-mf1 mws-xdb-testing1
+	
+### instances
+
+Syntax: `instances`
+
+Shows all instances for the given cloud, including IP addresses and status
+
+    PROMPT$ iScale.rb staging instances
+    STATUS              NICKNAME            IP                  PRIVATE_IP          INSTANCE_ID 
+    -------------------------------------------------------------------------------------------
+    online              lb1                 46.137.xxx.xxx      10.xx.xxx.xxx       i-XxXxXxXX  
+    online              rails-app1          46.137.xxx.xxx      10.xxx.xx.xxx       i-XxxXXxxX
+  
+
+### rails-console  
+
+Syntax: `rails-console <application> [<deploy_user>] [<deploy_to_path>]`
+  
+Opens a rails console for the given app on one of the cloud's rails application servers. You have to use your app's shortename (a.k.a. slugname). The last two arguments are optional. If they are omitted the 'deploy' will be used as deploy_user and '/srv/www/<application>/current' as deploy_to_path.
+  
+This means:
+
+    `rails-console my_app` 
+    
+is the same as 
+
+    `rails-console my_app deploy /srv/www/my_app/current`
+    
+HINT: If your application is a rails 2.x application, you have to run
+
+    `rails2-console my_app` 
