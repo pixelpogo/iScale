@@ -323,25 +323,6 @@ def hash_to_list_view(hash)
   list_view
 end
 
-def hash_to_list_view(hash)
-  list_view = ""
-  if hash.size > 0
-    width = 0
-    # generate headline
-    hash.first.keys.each do |key|
-      key_width = hash.first[key].length.to_i
-      list_view << key.to_s.upcase.ljust(key_width)
-      width += key_width
-    end
-    list_view << "\n".ljust(width,"-") + "\n"
-    hash.each do |instance|
-      instance.each{|k,v| list_view << v }
-      list_view << "\n"
-    end
-  end
-  list_view
-end
-
 def print_status(message)
   print "\r\e[0K#{message}"
   $stdout.flush
