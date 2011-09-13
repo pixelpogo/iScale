@@ -237,7 +237,7 @@ def rails_console(args, rails3=true)
   abort "No (running) instance found" unless instance
   print_status "Connecting to instance #{instance['nickname']}..."
   console = "#{name}: rails console on #{instance['nickname']}"
-  print_status "Opened new tab '#{console}’\n"
+  print_status "Opened new tab '#{console}'\n"
   deploy_user = args[1] || "deploy"
   rails_app_path = args[2] ||  "/srv/www/#{app['slug_name']}/current"
   console = rails3 ? "rails c" : "ruby script/console"
