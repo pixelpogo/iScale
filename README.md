@@ -178,3 +178,16 @@ is the same as
 HINT: If your application is a rails 2.x application, you have to run
 
     `rails2-console my_app` 
+
+
+### mysql
+
+Syntax: `mysql [<instance-name>]`
+
+Opens a mysql console for the given cloud on one of the cloud's mysql servers in a new terminal tab.
+If you omit the instance name the first mysql-server-instance in your cloud will be taken.
+
+    PROMPT$ iScale.rb staging mysql
+    Opened new tab 'mysql shell on rails-app1'
+
+HINT: Please keep in mind, that the mysql password, which is read directly from your cloud configuration, is part of the mysql command (e.g. mysql -u root -pMYPASSWORD) which means it might remain in your shell history.

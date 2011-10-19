@@ -6,7 +6,7 @@ require 'json'
 require 'yaml'
 
 API_URL = 'https://manage.scalarium.com/api/clouds'
-COMMANDS = ['load', 'open', 'cpu', 'execute', 'md5sum', 'deploy', 'instances','rails-console','rails2-console','applications']
+COMMANDS = ['load', 'open', 'cpu', 'execute', 'md5sum', 'deploy', 'instances','rails-console','rails2-console','applications', 'mysql']
 ### BEGIN Scalarium API handling
 
 def api(uri = '')
@@ -62,7 +62,7 @@ end
 ### BEGIN base methods
 
 def parse_command_line
-  if ARGV.count == 2 && ['roles', 'refresh','instances','applications'].include?(ARGV[1])
+  if ARGV.count == 2 && ['roles', 'refresh','instances','applications','mysql'].include?(ARGV[1])
     return cloud_name(ARGV[0]), ARGV[1], nil
   elsif ARGV.count == 2 && ARGV[0] == 'deploy'
     return nil, 'deploy', ARGV[1]
@@ -244,6 +244,24 @@ def rails_console(args, rails3=true)
   open_tab console, "ssh\ -A\ #{@username}@#{instance['dns_name']}", "cd #{rails_app_path}; sudo -u #{deploy_user} #{console} #{app['rails_env']}"
 end
 
+def mysql_shell(args)
+  print_status "Fetching cloud informations"
+
+  role = roles.detect{|r| r["shortname"].to_s == "db-master" && r["mysql_root_password"].to_s.size > 0}
+  pw = role["mysql_root_password"]
+  print_status "Found mysql role"
+
+  instance = filtered_instance(args[0]) if args.class == Array
+  instance = instances.detect { |i| i["role_ids"].include?(role["id"]) and i['status'] == "online" } unless instance
+  abort "No (running) instance found" unless instance
+  print_status "Connecting to instance #{instance['nickname']}..."
+
+  console = "mysql shell on #{instance['nickname']}"
+  print_status "Opened new tab '#{console}'\n"
+
+  open_tab console, "ssh\ -A\ #{@username}@#{instance['dns_name']}", "mysql -u root -p#{pw}"
+end
+
 def print_list_of_instances
   list = hash_to_list_view(list_of_instances)
   output = (list.size > 0 ? list : "no instances")
@@ -419,6 +437,8 @@ when 'rails-console'
   rails_console(details)
 when 'rails2-console'
   rails_console(details,rails3=false)
+when 'mysql'
+  mysql_shell(details)
 else
   abort "Unknown command '#{command}'"
 end
