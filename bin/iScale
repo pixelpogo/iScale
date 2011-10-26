@@ -80,6 +80,7 @@ def parse_command_line
           "             instances\n" +
           "             applications\n" +
           "             rails-console <application> [<deploy_user>] [<deploy_to_path>]\n" +
+          "             mysql [instance-name]\n" +
           "Usage 2: #{file_name} deploy <application>"
   end
 end
