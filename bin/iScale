@@ -4,6 +4,9 @@ require 'rubygems'
 require 'rest-client'
 require 'json'
 require 'yaml'
+require 'hirb'
+
+extend Hirb::Console
 
 API_URL = 'https://manage.scalarium.com/api/clouds'
 COMMANDS = ['load', 'open', 'cpu', 'execute', 'md5sum', 'deploy', 'instances','rails-console','rails2-console','applications', 'mysql']
@@ -263,17 +266,6 @@ def mysql_shell(args)
   open_tab console, "ssh\ -A\ #{@username}@#{instance['dns_name']}", "mysql -u root -p#{pw}"
 end
 
-def print_list_of_instances
-  list = hash_to_list_view(list_of_instances)
-  output = (list.size > 0 ? list : "no instances")
-  puts output
-end
-
-def print_list_of_applications
-  list = hash_to_list_view(list_of_applications)
-  output = (list.size > 0 ? list : "no applications")
-  puts output
-end
 
 def deploy_application(name)
   app = applications.detect{|application| application['name'] == name}
@@ -300,7 +292,7 @@ end
 #### Begin helpers
 def list_of_applications
   clouds = api()
-  applications.map do |application|
+  list = applications.map do |application|
     cloud = clouds.detect{|c| c['id'] == application['cluster_id']}
     {
       :name             => application["name"].to_s[0..29].ljust(30),
@@ -309,37 +301,21 @@ def list_of_applications
       :cloud            => ("#{cloud['name']} (#{cloud['region']})" rescue "").ljust(40)
     }
   end
+  list.sort{|a,b| a[:cloud]<=>b[:cloud]}.sort{|a,b| a[:name]<=>b[:name]}
 end
 
 def list_of_instances
-  instances.map do |instance|
+  list = instances.map do |instance|
     {
       :nickname     => instance["nickname"].to_s[0..19].ljust(20),
       :ip           => instance["ip"].to_s.ljust(20),
+      :dns_name     => instance["dns_name"].to_s.ljust(70),
       :private_ip   => instance["private_ip"].to_s.ljust(20),
       :status       => instance["status"].to_s.ljust(20),
       :instance_id  => instance["instance_id"].to_s.ljust(12)
     }
   end
-end
-
-def hash_to_list_view(hash)
-  list_view = ""
-  if hash.size > 0
-    width = 0
-    # generate headline
-    hash.first.keys.each do |key|
-      key_width = hash.first[key].length.to_i
-      list_view << key.to_s.upcase.ljust(key_width)
-      width += key_width
-    end
-    list_view << "\n".ljust(width,"-") + "\n"
-    hash.each do |instance|
-      instance.each{|k,v| list_view << v }
-      list_view << "\n"
-    end
-  end
-  list_view
+  list.sort {|a,b| a[:nickname]<=>b[:nickname]}
 end
 
 def print_status(message)
@@ -431,9 +407,9 @@ when 'md5sum'
     abort "Unknown role #{details.first.inspect}, use command 'roles' to list all available roles."
   end
 when 'instances'
-  print_list_of_instances
+  puts (list_of_instances.size > 0 ? table(list_of_instances, :resize => false) : "no instances")
 when 'applications'
-  print_list_of_applications
+  puts (list_of_applications.size > 0 ? table(list_of_applications, :resize => false) : "no applications")
 when 'rails-console'
   rails_console(details)
 when 'rails2-console'
